@@ -4,11 +4,10 @@ from math import sqrt
 class Vertex:
 
 	all_nodes = dict()
-	id = 0
 
-	def __init__(self, x, y):
-		Vertex.all_nodes[Vertex.id] = self
-		Vertex.id += 1
+	def __init__(self, id_num, x, y):
+		Vertex.all_nodes[id_num] = self
+		self.id = id_num
 		self.x = x
 		self.y = y
 		self.neighbors = list()
@@ -23,7 +22,14 @@ class Vertex:
 		else:
 			self.distances[n] = d
 
+	# Deprecated
+	def remove_neighbor(self, n):
+		self.neighbors.remove(n)
+
 	def distance(self, other):
 		delta_x = abs(self.x - other.x)
 		delta_y = abs(self.y - other.y)
 		return sqrt((delta_x ^ 2) + (delta_y ^ 2))
+
+	def get_dist(self, n):
+		return self.distances[n]
