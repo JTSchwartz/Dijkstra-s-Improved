@@ -1,10 +1,14 @@
+from heapq import *
 from itertools import islice
+from math import log
 import os
 import sys
 from vertex import *
 
 
 def main():
+	start_end = []
+
 	try:  # TODO: Dynamically read file
 		with os.open(sys.argv[0]) as file:
 			v_total, e_total = file.readline().split()
@@ -18,7 +22,7 @@ def main():
 				dist = Vertex.all_nodes[int(edge[0])].add_neighbor(int(edge[1]))
 				Vertex.all_nodes[int(edge[1])].add_neighbor(int(edge[0]), dist)
 
-			start, end = file.readlines()[-1].split()
+			start_end = file.readlines()[-1].split()
 
 	except IOError:
 		print("File cannot be found")
@@ -35,6 +39,44 @@ def main():
 	# 		nodes.get(y).add_neighbor(x, dist)
 	# 		x.remove_neighbor(node)
 	# 		y.remove_neighbor(node)
+
+	queue = []
+	start = Vertex.all_nodes[int(start_end[0])]
+	end = Vertex.all_nodes[int(start_end[1])]
+	v_count = e_count = start.dist = 0
+	heappush(queue, start)
+	continue_loop = True
+
+	while continue_loop:
+		cur = heappop(queue)
+		v_count += 1
+
+		if cur is end:
+			continue
+		elif end in cur.neighbors:  # A straight line is always shortest, other neighbors cannot have shorter paths
+			if end.dist < cur.dist + cur.get_dist(end.id):
+				e_count += 1
+				end.parent = cur.id
+				end.dist = cur.dist + cur.get_dist(end.id)
+
+			if end.dist <= e_log_v(e_count, v_count):
+				break
+
+			continue
+
+		for adj_id in cur.neighbors:
+			adj = Vertex.all_nodes[adj_id]
+			this_dist = cur.dist + cur.get_dist(adj.id)
+			e_count += 1
+
+			if adj.dist < this_dist:
+				adj.dist = this_dist
+				adj.parent = cur.id
+				heappush(queue, adj)
+
+
+def e_log_v(e, v):
+	return e * log(v)
 
 
 if __name__ == '__main__':

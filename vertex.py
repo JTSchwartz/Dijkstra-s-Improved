@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, inf
 
 
 class Vertex:
@@ -10,8 +10,13 @@ class Vertex:
 		self.id = id_num
 		self.x = x
 		self.y = y
+		self.dist = inf
+		self.parent = self.child = -1
 		self.neighbors = list()
 		self.distances = dict()
+
+	def __lt__(self, other):
+		return self.dist < other.dist
 
 	def add_neighbor(self, n, d=None):
 		self.neighbors.append(n)
