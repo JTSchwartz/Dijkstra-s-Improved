@@ -1,7 +1,6 @@
 from heapq import *
 from itertools import islice
 from math import log
-import os
 import sys
 from vertex import *
 
@@ -10,19 +9,21 @@ def main():
 	start_end = []
 
 	try:  # TODO: Dynamically read file
-		with os.open(sys.argv[0]) as file:
-			v_total, e_total = file.readline().split()
+		with open(sys.argv[1]) as file:
+			ve_counts = file.readline().split()
+			v_total, e_total = int(ve_counts[0]), int(ve_counts[1])
 
-			for line in islice(file, 1, v_total + 2):
+			for line in islice(file, 0, v_total):
 				split = line.split()
 				Vertex(int(split[0]), int(split[1]), int(split[2]))
 
-			for line in islice(file, v_total + 2, v_total + e_total + 2):
+			for line in islice(file, 0, e_total):
 				edge = line.split()
 				dist = Vertex.all_nodes[int(edge[0])].add_neighbor(int(edge[1]))
 				Vertex.all_nodes[int(edge[1])].add_neighbor(int(edge[0]), dist)
+				# print(line)
 
-			start_end = file.readlines()[-1].split()
+			start_end = file.readline().split()
 
 	except IOError:
 		print("File cannot be found")
@@ -45,21 +46,26 @@ def main():
 	end = Vertex.all_nodes[int(start_end[1])]
 	v_count = e_count = start.dist = 0
 	heappush(queue, start)
-	continue_loop = True
 
-	while continue_loop:
+	while True:
+		if len(queue) == 0:
+			# print("Broke")
+			break
+
 		cur = heappop(queue)
+		# print("Cur:", cur.id)
 		v_count += 1
 
 		if cur is end:
 			continue
 		elif end in cur.neighbors:  # A straight line is always shortest, other neighbors cannot have shorter paths
-			if end.dist < cur.dist + cur.get_dist(end.id):
+			if end.dist > cur.dist + cur.get_dist(end.id):
 				e_count += 1
 				end.parent = cur.id
 				end.dist = cur.dist + cur.get_dist(end.id)
 
 			if end.dist <= e_log_v(e_count, v_count):
+				# print("ELogV")
 				break
 
 			continue
@@ -67,12 +73,25 @@ def main():
 		for adj_id in cur.neighbors:
 			adj = Vertex.all_nodes[adj_id]
 			this_dist = cur.dist + cur.get_dist(adj.id)
+			# print(cur.id, "to", adj.id, ":", this_dist)
 			e_count += 1
 
-			if adj.dist < this_dist:
+			if adj.dist > this_dist:
 				adj.dist = this_dist
 				adj.parent = cur.id
 				heappush(queue, adj)
+
+	hop = end
+	path = []
+	while hop is not start:
+		path.append(hop)
+		hop = Vertex.all_nodes[hop.parent]
+
+	print("Path:", start.id, "Distance:", 0)
+
+	while len(path) != 0:
+		node = path.pop()
+		print("Path: {0:d} Distance: {1:.2f}".format(node.id, node.dist))
 
 
 def e_log_v(e, v):

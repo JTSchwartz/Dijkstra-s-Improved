@@ -34,7 +34,7 @@ class Vertex:
 	def distance(self, other):
 		delta_x = abs(self.x - other.x)
 		delta_y = abs(self.y - other.y)
-		return sqrt((delta_x ^ 2) + (delta_y ^ 2))
+		return sqrt((delta_x ** 2) + (delta_y ** 2))
 
 	def get_dist(self, n):
 		return self.distances[n]
