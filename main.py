@@ -1,59 +1,59 @@
 from heapq import *
 from itertools import islice
 from math import log
+from random import randrange
 import sys
 from vertex import *
 
 
 def main():
-	start_end = []
+	start_end, v_total, e_total = [], 0, 0
 
-	try:  # TODO: Dynamically read file
+	try:
 		with open(sys.argv[1]) as file:
-			ve_counts = file.readline().split()
-			v_total, e_total = int(ve_counts[0]), int(ve_counts[1])
+			ve_totals = file.readline().split()
+			v_total, e_total = int(ve_totals[0]), int(ve_totals[1])
 
+			# Read in all listed Vertices
+			print("Vertices:", v_total)
 			for line in islice(file, 0, v_total):
 				split = line.split()
 				Vertex(int(split[0]), int(split[1]), int(split[2]))
 
+			# Read in all Nodes
+			print("Edges:", e_total)
 			for line in islice(file, 0, e_total):
 				edge = line.split()
-				dist = Vertex.all_nodes[int(edge[0])].add_neighbor(int(edge[1]))
+				dist = Vertex.all_nodes[int(edge[0])].add_neighbor(int(edge[1]))  # Return distance so it wont be calculated again
 				Vertex.all_nodes[int(edge[1])].add_neighbor(int(edge[0]), dist)
-				# print(line)
 
-			start_end = file.readline().split()
+			start_end = file.readline().split()  # Last line may hold a provided start and end node
+			print("Finished reading in file")
 
 	except IOError:
-		print("File cannot be found")
+		print("File not found")
 		exit(1)
 
-	# TODO: Verify this is useless
-	# nodes = Vertex.all_nodes
-	# for node in nodes:
-	# 	if len(node.neighbors) == 2 and node.id is not start or node.id is not end:
-	# 		x = node.neighbors[0]
-	# 		y = node.neighbors[1]
-	# 		dist = node.get_dist(x) + node.get_dist(y)
-	# 		nodes.get(x).add_neighbor(y, dist)
-	# 		nodes.get(y).add_neighbor(x, dist)
-	# 		x.remove_neighbor(node)
-	# 		y.remove_neighbor(node)
+	if len(start_end) == 0:  # Not all inputs will specify a start and end node
+		# Choose two numbers within N
+		start = Vertex.all_nodes[randrange(v_total)]
+		end = Vertex.all_nodes[randrange(v_total)]
 
-	queue = []
-	start = Vertex.all_nodes[int(start_end[0])]
-	end = Vertex.all_nodes[int(start_end[1])]
-	v_count = e_count = start.dist = 0
+		while end == start:  # Ensure that Start and End are not the same node
+			end = Vertex.all_nodes[randrange(v_total)]
+
+	else:  # Handles inputs that provide a start and end
+		start = Vertex.all_nodes[int(start_end[0])]
+		end = Vertex.all_nodes[int(start_end[1])]
+
+	print("Start:", start.id, "End:", end.id)
+
+	v_count = e_count = start.dist = 0  # Initiate counts as 0 and set the distance of the start node as 0
+	queue = []  # List that will be used as a priority queue for Dijkstra's
 	heappush(queue, start)
 
-	while True:
-		if len(queue) == 0:
-			# print("Broke")
-			break
-
+	while len(queue) != 0:
 		cur = heappop(queue)
-		# print("Cur:", cur.id)
 		v_count += 1
 
 		if cur is end:
@@ -64,25 +64,24 @@ def main():
 				end.parent = cur.id
 				end.dist = cur.dist + cur.get_dist(end.id)
 
-			if end.dist <= e_log_v(e_count, v_count):
-				# print("ELogV")
+			if end.dist <= e_log_v(e_count, v_count):  # E' Log V' is theoretically the shortest possible distance to a node
 				break
 
 			continue
 
+		# Test all of the current nodes neighbors to see if this node can offer a shorter distance
 		for adj_id in cur.neighbors:
 			adj = Vertex.all_nodes[adj_id]
-			this_dist = cur.dist + cur.get_dist(adj.id)
-			# print(cur.id, "to", adj.id, ":", this_dist)
+			proposed_dist = cur.dist + cur.get_dist(adj.id)
 			e_count += 1
 
-			if adj.dist > this_dist:
-				adj.dist = this_dist
+			if adj.dist > proposed_dist:
+				adj.dist = proposed_dist
 				adj.parent = cur.id
 				heappush(queue, adj)
 
-	hop = end
-	path = []
+	# Reverse engineer the shortest distance and append to list to be read in proper order
+	hop, path = end, []
 	while hop is not start:
 		path.append(hop)
 		hop = Vertex.all_nodes[hop.parent]
@@ -94,9 +93,13 @@ def main():
 		print("Path: {0:d} Distance: {1:.2f}".format(node.id, node.dist))
 
 
+# Simplified call for assumed shortest distance
 def e_log_v(e, v):
 	return e * log(v)
 
 
 if __name__ == '__main__':
+	if len(sys.argv) != 2:
+		print("Usage: dijkstra.exe [input file]")
+
 	main()
